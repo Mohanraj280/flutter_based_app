@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // Import http package for API calls
 import 'dart:convert'; // Import for JSON parsing
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 
 void main() {
@@ -27,6 +29,8 @@ class FoodLoggingScreen extends StatefulWidget {
 
 class _FoodLoggingScreenState extends State<FoodLoggingScreen> {
   // Define limits for junk food categories
+
+
   int _sweetsLimit = 300; // Limit for sweets in calories
   int _chipsLimit = 300;
   int _lollipoplimit=300;
@@ -196,9 +200,9 @@ class _FoodLoggingScreenState extends State<FoodLoggingScreen> {
       String foodItem,
       String quantity,
       String date,
-      ) {
-    // For demonstration purpose, we'll increment consumed calories for sweets and chips
-    // You can replace this with actual data from the API response
+      )
+  {
+
     if (foodItem.toLowerCase().contains('sweets')) {
       _updateConsumption('sweets', 150);
     } else if (foodItem.toLowerCase().contains('chips')) {
@@ -421,6 +425,38 @@ class _FoodLoggingScreenState extends State<FoodLoggingScreen> {
     });
   }
 }
+// Method to save data to SharedPreferences
+void _saveData(String mealType, String foodItem, String quantity, String date) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  // Encode the data into a JSON string
+  String jsonData = jsonEncode({
+    'mealType': mealType,
+    'foodItem': foodItem,
+    'quantity': quantity,
+    'date': date,
+  });
+  // Save the JSON string to SharedPreferences
+  prefs.setString('foodLog', jsonData);
+}
+
+
+// Method to retrieve data from SharedPreferences
+Future<Map<String, String>> _retrieveData() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  // Retrieve the JSON string from SharedPreferences
+  String? jsonData = prefs.getString('foodLog');
+  // Decode the JSON string into a Map
+  Map<String, dynamic> decodedData = jsonDecode(jsonData ?? '{}');
+  // Convert dynamic values to String
+  Map<String, String> data = {
+    'mealType': decodedData['mealType'] ?? '',
+    'foodItem': decodedData['foodItem'] ?? '',
+    'quantity': decodedData['quantity'] ?? '',
+    'date': decodedData['date'] ?? '',
+  };
+  return data;
+}
+
 class FoodDetailsForm extends StatefulWidget {
   final Function(String, String, String, String) submitFormCallback;
 
@@ -519,4 +555,14 @@ class _FoodDetailsFormState extends State<FoodDetailsForm> {
       ),
     );
   }
+
+  // Method to save form data to SharedPreferences
+  Future<void> _saveFormData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('mealType', _mealTypeController.text);
+    prefs.setString('foodItem', _foodItemController.text);
+    prefs.setString('quantity', _quantityController.text);
+    prefs.setString('date', _dateController.text);
+  }
 }
+
